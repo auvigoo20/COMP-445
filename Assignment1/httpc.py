@@ -2,46 +2,6 @@ import argparse
 import socket
 from urllib.parse import urlparse
 
-
-def testrun():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = "httpbin.org"
-
-    sock.connect((host, 80))
-
-    # GET only
-    # line = "GET /?q=hello+world HTTP/1.0\r\nHost:google.ca\r\n\r\n"
-
-    # GET with query params
-    # line = "GET /get?course=networking&assignment=1 HTTP/1.0\r\nHost:httpbin.org\r\n\r\n"
-
-    # POST with header and inline data
-    someJSON = "{\"Assignment\":1}"
-    line = "POST /post HTTP/1.0\r\nHost:httpbin.org\r\nContent-Type:application/json\r\n" + "Content-Length:" + str(
-        len(someJSON)) + "\r\n\r\n" + someJSON + "\r\n"
-
-    # POST with header and file
-    # file = open("hello.txt", "r")
-    # try:
-    #     fileContent = file.read()
-    #     line = "POST /post HTTP/1.0\r\nHost:httpbin.org\r\nContent-Type:application/json\r\n" + "Content-Length:" + str(
-    #         len(fileContent)) + "\r\n\r\n" + fileContent + "\r\n"
-    #
-    # except Exception as e:
-    #     print(f"An error has occured when reading the file:{e}")
-    # finally:
-    #     file.close()
-
-    request = line.encode("utf-8")
-    sock.send(request)
-
-    response = sock.recv(1024)
-
-    print(response.decode("utf-8"))
-
-    sock.close()
-
-
 help_general = ("httpc is a curl-like application but supports HTTP protocol only.\n"
                 "Usage:\n"
                 "httpc command [arguments]\n"
@@ -84,6 +44,8 @@ def run_http_client(args):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, 80))
 
+        request = ""
+
         if args.command == 'get':
             # Build the GET request
             request = "GET " + path
@@ -101,18 +63,6 @@ def run_http_client(args):
                     request = request + header + "\r\n"
 
             request = request + "\r\n"
-            request_encoded = request.encode("utf-8")
-            sock.send(request_encoded)
-
-            response_encoded = sock.recv(1024)
-            response = response_encoded.decode("utf-8")
-            if args.verbose:
-                print(response)
-            else:
-                # Remove details from the response if not verbose
-                print(response.split("\r\n\r\n")[1])
-
-            sock.close()
         elif args.command == 'post':
             # Build the POST request
             request = "POST " + path
@@ -145,23 +95,24 @@ def run_http_client(args):
                     file.close()
 
             request = request + "\r\n"
-            request_encoded = request.encode("utf-8")
-            sock.send(request_encoded)
 
-            response_encoded = sock.recv(1024)
-            response = response_encoded.decode("utf-8")
-            if args.verbose:
-                print("VERBOSE")
-                print(response)
-            else:
-                # Remove details from the response if not verbose
-                print("NOT VERBOSE")
-                print(response.split("\r\n\r\n")[1])
+        # Encode and send request
+        request_encoded = request.encode("utf-8")
+        sock.send(request_encoded)
 
-            sock.close()
+        # Receive and decode response
+        response_encoded = sock.recv(1024)
+        response = response_encoded.decode("utf-8")
+        if args.verbose:
+            print("VERBOSE")
+            print(response)
+        else:
+            # Remove details from the response if not verbose
+            print("NOT VERBOSE")
+            print(response.split("\r\n\r\n")[1])
 
+        sock.close()
 
-# testrun()
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('--help', dest='help', action='store_true')
 parser.add_argument('command', choices=['get', 'post', ''], nargs='?', default='')
@@ -171,6 +122,3 @@ parser.add_argument('-d', dest='data')
 parser.add_argument('-f', dest='file')
 parser.add_argument('URL', action='store', nargs='?')
 run_http_client(parser.parse_args())
-
-# print(parser.parse_args(['get', '-h', 'someheader', "http://httpbin.org/get?course=networking&assignment=1"]))
-# print(parser.parse_args())
