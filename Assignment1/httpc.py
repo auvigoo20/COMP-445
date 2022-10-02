@@ -103,13 +103,19 @@ def run_http_client(args):
         # Receive and decode response
         response_encoded = sock.recv(1024)
         response = response_encoded.decode("utf-8")
-        if args.verbose:
-            print("VERBOSE")
-            print(response)
+
+        if not args.verbose:
+            response = response.split("\r\n\r\n")[1]
+        if args.output_file:
+            file = open(args.output_file, "w")
+            try:
+                file.write(response)
+            except Exception as e:
+                print(f"An error has occured when writing to the file:{e}")
+            finally:
+                file.close()
         else:
-            # Remove details from the response if not verbose
-            print("NOT VERBOSE")
-            print(response.split("\r\n\r\n")[1])
+            print(response)
 
         sock.close()
 
@@ -121,4 +127,5 @@ parser.add_argument('-h', dest='headers', action='append')
 parser.add_argument('-d', dest='data')
 parser.add_argument('-f', dest='file')
 parser.add_argument('URL', action='store', nargs='?')
+parser.add_argument('-o', dest='output_file')
 run_http_client(parser.parse_args())
