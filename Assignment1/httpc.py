@@ -25,6 +25,83 @@ help_post = ("usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] U
              "Either [-d] or [-f] can be used but not both.")
 
 
+def build_http_request(args):
+    parsed_URL = urlparse(args.URL)
+    host = parsed_URL.netloc
+    path = parsed_URL.path if len(parsed_URL.path) > 0 else "/"
+    query = parsed_URL.query
+
+    request = ""
+
+    if args.command == 'get':
+        # Build the GET request
+        request = "GET " + path
+
+        # Append query params
+        if len(query) > 0:
+            request = request + "?" + query
+
+        # Append host
+        request = request + " HTTP/1.0\r\nHost:" + host + "\r\n" + "User-Agent:Concordia-HTTP/1.0\r\n"
+
+        # Append headers
+        if args.headers:
+            for header in args.headers:
+                request = request + header + "\r\n"
+
+        request = request + "\r\n"
+    elif args.command == 'post':
+        # Build the POST request
+        request = "POST " + path
+
+        # Append query params
+        if len(query) > 0:
+            request = request + "?" + query
+
+        # Append host and user agent
+        request = request + " HTTP/1.0\r\nHost:" + host + "\r\n" + "User-Agent:Concordia-HTTP/1.0\r\n"
+
+        # Append headers
+        if args.headers:
+            for header in args.headers:
+                request = request + header + "\r\n"
+
+        # Append inline data
+        if args.data:
+            request = request + "Content-Length:" + str(len(args.data)) + "\r\n\r\n" + args.data
+
+        # Append file data
+        if args.file:
+            file = open(args.file, "r")
+            try:
+                file_content = file.read()
+                request = request + "Content-Length:" + str(len(file_content)) + "\r\n\r\n" + file_content
+            except Exception as e:
+                print(f"An error has occured when reading the file:{e}")
+            finally:
+                file.close()
+
+        request = request + "\r\n"
+
+    return request
+
+
+def send_request(host, request):
+    # Connect to host
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, 80))
+
+    # Encode and send request
+    request_encoded = request.encode("utf-8")
+    sock.send(request_encoded)
+
+    # Receive and decode response
+    response_encoded = sock.recv(1024)
+    response = response_encoded.decode("utf-8")
+    sock.close()
+    return response
+
+
 def run_http_client(args):
     # Help flag is turned on
     if args.help:
@@ -37,72 +114,8 @@ def run_http_client(args):
     else:
         parsed_URL = urlparse(args.URL)
         host = parsed_URL.netloc
-        path = parsed_URL.path if len(parsed_URL.path) > 0 else "/"
-        query = parsed_URL.query
-
-        # Connect to host
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, 80))
-
-        request = ""
-
-        if args.command == 'get':
-            # Build the GET request
-            request = "GET " + path
-
-            # Append query params
-            if len(query) > 0:
-                request = request + "?" + query
-
-            # Append host
-            request = request + " HTTP/1.0\r\nHost:" + host + "\r\n"
-
-            # Append headers
-            if args.headers:
-                for header in args.headers:
-                    request = request + header + "\r\n"
-
-            request = request + "\r\n"
-        elif args.command == 'post':
-            # Build the POST request
-            request = "POST " + path
-
-            # Append query params
-            if len(query) > 0:
-                request = request + "?" + query
-
-            # Append host
-            request = request + " HTTP/1.0\r\nHost:" + host + "\r\n"
-
-            # Append headers
-            if args.headers:
-                for header in args.headers:
-                    request = request + header + "\r\n"
-
-            # Append inline data
-            if args.data:
-                request = request + "Content-Length:" + str(len(args.data)) + "\r\n\r\n" + args.data
-
-            # Append file data
-            if args.file:
-                file = open(args.file, "r")
-                try:
-                    file_content = file.read()
-                    request = request + "Content-Length:" + str(len(file_content)) + "\r\n\r\n" + file_content
-                except Exception as e:
-                    print(f"An error has occured when reading the file:{e}")
-                finally:
-                    file.close()
-
-            request = request + "\r\n"
-
-        # Encode and send request
-        request_encoded = request.encode("utf-8")
-        sock.send(request_encoded)
-
-        # Receive and decode response
-        response_encoded = sock.recv(1024)
-        response = response_encoded.decode("utf-8")
+        request = build_http_request(args)
+        response = send_request(host, request)
 
         if not args.verbose:
             response = response.split("\r\n\r\n")[1]
@@ -117,7 +130,6 @@ def run_http_client(args):
         else:
             print(response)
 
-        sock.close()
 
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('--help', dest='help', action='store_true')
