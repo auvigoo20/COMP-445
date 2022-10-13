@@ -9,12 +9,14 @@ help_general = ("httpc is a curl-like application but supports HTTP protocol onl
                 "\tget executes a HTTP GET request and prints the response.\n"
                 "\tpost executes a HTTP POST request and prints the response.\n"
                 "\thelp prints this screen.\n"
-                "Use \"httpc help [command]\" for more information about a command.\n")
+                "Use \"httpc --help [command]\" for more information about a command.\n")
 
-help_get = ("usage: httpc get [-v] [-h key:value] URL\n"
+help_get = ("usage: httpc get [-v] [-h key:value] [-r] [-o output-file] URL\n"
             "Get executes a HTTP GET request for a given URL.\n"
             "\t-v Prints the detail of the response such as protocol, status, and headers.\n"
-            "\t-h key:value Associates headers to HTTP Request with the format 'key:value'.\n")
+            "\t-h key:value Associates headers to HTTP Request with the format 'key:value'.\n"
+            "\t-r Allows redirection to occur when responses have status codes 3xx.\n"
+            "\t-o output-file Write the console output to an external file.\n")
 
 help_post = ("usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n"
              "Post executes a HTTP POST request for a given URL with inline data or from file.\n"
@@ -22,6 +24,8 @@ help_post = ("usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] U
              "\t-h key:value Associates headers to HTTP Request with the format 'key:value'.\n"
              "\t-d string Associates an inline data to the body HTTP POST request.\n"
              "\t-f file Associates the content of a file to the body HTTP POST request.\n"
+             "\t-r Allows redirection to occur when responses have status codes 3xx.\n"
+             "\t-o output-file Write the console output to an external file.\n"
              "Either [-d] or [-f] can be used but not both.")
 
 
