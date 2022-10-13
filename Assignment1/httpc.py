@@ -117,6 +117,33 @@ def run_http_client(args):
         request = build_http_request(args)
         response = send_request(host, request)
 
+        # REDIRECTION HANDLING (response codes 3xx)
+        response_details = response.split("\r\n\r\n")[0]
+        response_status_line = response_details.split("\n")[0]
+        response_code = response_status_line.split(" ")[1]  # Get response code
+        while response_code[0] == "3":
+            response_lines = response_details.split("\r\n")
+            redirect_url = ""
+
+            # Get redirection URL
+            for line in response_lines:
+                if "Location:" in line:
+                    redirect_url = line.split(" ")[1]
+
+            print("REDIRECTION " + response_code + " TO: " + redirect_url)
+            if "http:" not in redirect_url and "https:" not in redirect_url:
+                # Build the whole URL if it's a relative redirect
+                redirect_url = parsed_URL.scheme + "://" + host + redirect_url
+            args.URL = redirect_url
+            # Send new request
+            request = build_http_request(args)
+            response = send_request(host, request)
+
+            # Check the status code of the newly sent request. If it is 3xx, repeat the process again
+            response_details = response.split("\r\n\r\n")[0]
+            response_status_line = response_details.split("\n")[0]
+            response_code = response_status_line.split(" ")[1]
+
         if not args.verbose:
             response = response.split("\r\n\r\n")[1]
         if args.output_file:
@@ -140,4 +167,4 @@ parser.add_argument('-d', dest='data')
 parser.add_argument('-f', dest='file')
 parser.add_argument('URL', action='store', nargs='?')
 parser.add_argument('-o', dest='output_file')
-run_http_client(parser.parse_args())
+run_http_client(parser.parse_intermixed_args())
