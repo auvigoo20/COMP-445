@@ -63,10 +63,10 @@ def build_http_request(url, command, headers, data, file):
     return request
 
 
-def send_request(host, request):
+def send_request(host, request, port):
     # Connect to host
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, 80))
+    sock.connect((host, port))
 
     # Encode and send request
     request_encoded = request.encode("utf-8")
