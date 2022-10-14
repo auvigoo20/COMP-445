@@ -73,7 +73,7 @@ def run_http_client(args):
                 response_code = response_status_line.split(" ")[1]
 
         if not args.verbose:
-            response = response.split("\r\n\r\n")[1]
+            response = response.split("\r\n\r\n")[1]    # Remove the response details if not verbose
         if args.output_file:
             file = open(args.output_file, "w")
             try:
