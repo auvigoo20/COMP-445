@@ -1,18 +1,15 @@
-# Requirements
-1. Python 3+
+# COMP 445 Lab Assignment #1
 
-# Run echo server
+Written by: Auvigoo Ahmed (40128901)
 
-`python echoserver.py --port 8007`
+To test this out, you could use the following commands:
 
-# Run echo client
+GET REQUESTS:
+- ``python httpc.py get 'http://httpbin.org/get?course=networking&assignment=1' -v``
+- ``python httpc.py get 'http://httpbin.org/absolute-redirect/3' -v -r``
+- ``python httpc.py get 'http://httpbin.org/redirect/3' -v -r``
 
-`python echoclient.py --host localhost --port 8007`
+POST REQUESTS:
+- ``python httpc.py post -h Content-Type:application/json -d '{\"Assignment\": 1}' http://httpbin.org/post -v``
+- ``python httpc.py post -h Content-Type:application/json -f input.txt http://httpbin.org/post -v``
 
-# Run time server
-
-`python timeserver.py --port 8037`
-
-# Run time client
-
-`python timelient.py --host localhost --port 8037`
