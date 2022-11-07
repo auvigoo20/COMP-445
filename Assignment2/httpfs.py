@@ -1,9 +1,11 @@
 import socket
 import threading
 import datetime
+import os
 import argparse
 
-http_version = 'HTTP/1.1'
+http_version = 'HTTP/1.0'
+current_directory = os.getcwd()
 
 
 def run_server(host, port):
@@ -25,6 +27,7 @@ def handle_client(conn, addr):
         data = conn.recv(1024)
         request = data.decode("utf-8")
         print(request)
+        print(current_directory)
 
         request_sections = request.split("\r\n\r\n")
         request_header = request_sections[0]
@@ -41,16 +44,48 @@ def handle_client(conn, addr):
 
         if request_method == 'GET':
             print('get request')
-            response_code = '200 OK'
+            # GET /
+            if request_url == '/':
+                list_of_files = os.listdir(args.path_to_dir)
+                for i in list_of_files:
+                    response_body = response_body + i + '\r\n'
+                response_code = '200 OK'
+            # GET /foo
+            elif len(request_url) > 1:
+                # Prevent the user from accessing files outside the working directory (for example Assignment2/testfolder/../..)
+                request_url_absolute_path = os.path.abspath(args.path_to_dir + request_url)
+                if not request_url_absolute_path.startswith(args.path_to_dir):
+                    response_code = '403 Forbidden'
+                else:
+                    try:
+                        file_to_read = open(request_url_absolute_path)
+                        response_body = response_body + file_to_read.read()
+                        response_code = '200 OK'
+                    except IOError:
+                        response_code = '404 Not Found'
+                    finally:
+                        file_to_read.close()
         elif request_method == 'POST':
-            print('post request')
-            response_code = '200 OK'
+            # Prevent the user from accessing files outside the working directory (for example
+            # Assignment2/testfolder/../..)
+            request_url_absolute_path = os.path.abspath(args.path_to_dir + request_url)
+            if not request_url_absolute_path.startswith(args.path_to_dir):
+                response_code = '403 Forbidden'
+            else:
+                try:
+                    file_to_write = open(request_url_absolute_path, 'w')
+                    file_to_write.write(request_body)
+                    response_code = '201 Created'
+                finally:
+                    file_to_write.close()
 
+
+
+        # ONLY IF CODE 200 OR 201
         now = datetime.datetime.now(datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-        response_header = http_version + ' ' + response_code + '\r\nDate: ' + now
+        response_header = response_header + http_version + ' ' + response_code + '\r\nDate: ' + now
         response_header = response_header + '\r\nContent-Type: text\r\nContent-Length: ' + str(
-            len(response_body)) + '\r\nConnection: close\r\nServer: httpfs\r\n\r\n '
+            len(response_body)) + '\r\nConnection: close\r\nServer: httpfs\r\n\r\n'
 
         final_response = response_header + response_body
 
@@ -59,4 +94,11 @@ def handle_client(conn, addr):
         conn.close()
 
 
-run_server('', 8080)
+
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument('--help', dest='help', action='store_true')
+parser.add_argument('-v', dest='verbose', action='store_true')
+parser.add_argument('-p', dest='port')
+parser.add_argument('-d', dest='path_to_dir', default=current_directory)
+args = parser.parse_args()
+run_server('', int(args.port))
