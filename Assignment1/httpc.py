@@ -41,8 +41,10 @@ def run_http_client(args):
     else:
         parsed_URL = urlparse(args.URL)
         host = parsed_URL.netloc
+        if len(host) < 1:
+            host = "localhost"
         request = build_http_request(args.URL, args.command, args.headers, args.data, args.file)
-        response = send_request(host, request, 80)
+        response = send_request(host, request, 8080)
 
         # REDIRECTION HANDLING (response codes 3xx)
         if args.redirect:
@@ -65,7 +67,7 @@ def run_http_client(args):
                 args.URL = redirect_url
                 # Send new request
                 request = build_http_request(args.URL, args.command, args.headers, args.data, args.file)
-                response = send_request(host, request, 80)
+                response = send_request(host, request, 8007)
 
                 # Check the status code of the newly sent request. If it is 3xx, repeat the process again
                 response_details = response.split("\r\n\r\n")[0]
