@@ -61,10 +61,9 @@ def handle_client(conn, addr):
                         file_to_read = open(request_url_absolute_path)
                         response_body = response_body + file_to_read.read()
                         response_code = '200 OK'
+                        file_to_read.close()
                     except IOError:
                         response_code = '404 Not Found'
-                    finally:
-                        file_to_read.close()
         elif request_method == 'POST':
             # Prevent the user from accessing files outside the working directory (for example
             # Assignment2/testfolder/../..)
