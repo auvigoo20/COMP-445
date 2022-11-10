@@ -44,19 +44,23 @@ def handle_client(conn, addr):
 
         if request_method == 'GET':
             print('get request')
-            # GET /
-            if request_url == '/':
-                list_of_files = os.listdir(args.path_to_dir)
-                for i in list_of_files:
-                    response_body = response_body + i + '\r\n'
-                response_code = '200 OK'
-            # GET /foo
-            elif len(request_url) > 1:
-                # Prevent the user from accessing files outside the working directory (for example Assignment2/testfolder/../..)
-                request_url_absolute_path = os.path.abspath(args.path_to_dir + request_url)
-                if not request_url_absolute_path.startswith(args.path_to_dir):
-                    response_code = '403 Forbidden'
-                else:
+            # Prevent the user from accessing files outside the working directory (for example Assignment2/testfolder/../..)
+            request_url_absolute_path = os.path.abspath(args.path_to_dir + request_url)
+            if not request_url_absolute_path.startswith(args.path_to_dir):
+                response_code = '403 Forbidden'
+            else:  # Check if path is invalid, a file or a directory
+                if not os.path.exists(request_url_absolute_path):
+                    response_code = '404 Not Found'
+
+                # GET /
+                elif os.path.isdir(request_url_absolute_path):
+                    list_of_files = os.listdir(request_url_absolute_path)
+                    for i in list_of_files:
+                        response_body = response_body + i + '\r\n'
+                    response_code = '200 OK'
+
+                # GET /foo
+                elif os.path.isfile(request_url_absolute_path):
                     try:
                         file_to_read = open(request_url_absolute_path)
                         response_body = response_body + file_to_read.read()
@@ -75,10 +79,9 @@ def handle_client(conn, addr):
                     file_to_write = open(request_url_absolute_path, 'w')
                     file_to_write.write(request_body)
                     response_code = '201 Created'
-                finally:
                     file_to_write.close()
-
-
+                except IOError:
+                    response_code = '404 Not Found'
 
         # ONLY IF CODE 200 OR 201
         now = datetime.datetime.now(datetime.timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT')
@@ -93,11 +96,10 @@ def handle_client(conn, addr):
         conn.close()
 
 
-
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('--help', dest='help', action='store_true')
 parser.add_argument('-v', dest='verbose', action='store_true')
-parser.add_argument('-p', dest='port')
+parser.add_argument('-p', dest='port', default=8080)
 parser.add_argument('-d', dest='path_to_dir', default=current_directory)
 args = parser.parse_args()
 run_server('', int(args.port))
