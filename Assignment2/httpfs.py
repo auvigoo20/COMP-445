@@ -27,7 +27,10 @@ def handle_client(conn, addr):
         data = conn.recv(1024)
         request = data.decode("utf-8")
         print(request)
-        print(current_directory)
+
+        # Set the directory of the file server if not default
+        if not args.path_to_dir == current_directory:
+            args.path_to_dir = current_directory + args.path_to_dir
 
         request_sections = request.split("\r\n\r\n")
         request_header = request_sections[0]
@@ -41,6 +44,7 @@ def handle_client(conn, addr):
         response_code = ''
         response_header = ''
         response_body = ''
+
 
         if request_method == 'GET':
             print('get request')
