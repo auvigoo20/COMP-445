@@ -41,10 +41,14 @@ def run_http_client(args):
     else:
         parsed_URL = urlparse(args.URL)
         host = parsed_URL.netloc
-        if len(host) < 1 or "localhost" in host:
+        port = int(args.port)
+        if len(host) < 1:
+            host = "localhost"
+        elif "localhost" in host:
+            port = int(host.split(':')[1])
             host = "localhost"
         request = build_http_request(args.URL, args.command, args.headers, args.data, args.file)
-        response = send_request(host, request, 8080)
+        response = send_request(host, request, port)
 
         # REDIRECTION HANDLING (response codes 3xx)
         if args.redirect:
@@ -98,4 +102,5 @@ parser.add_argument('-f', dest='file')
 parser.add_argument('-r', dest='redirect', action='store_true')
 parser.add_argument('URL', action='store', nargs='?')
 parser.add_argument('-o', dest='output_file')
+parser.add_argument('-p', dest='port', default=8080)
 run_http_client(parser.parse_intermixed_args())
