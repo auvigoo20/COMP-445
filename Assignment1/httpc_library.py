@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 def build_http_request(url, command, headers, data, file):
     parsed_URL = urlparse(url)
     host = parsed_URL.netloc
+    if len(host) < 1 or "localhost" in host:
+        host = "localhost"
     path = parsed_URL.path if len(parsed_URL.path) > 0 else "/"
     query = parsed_URL.query
 
