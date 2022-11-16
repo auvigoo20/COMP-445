@@ -25,7 +25,10 @@ def handle_client(conn, addr):
     try:
         data = conn.recv(1024)
         request = data.decode("utf-8")
-        print(request)
+
+        debug_messages = args.verbose
+        if debug_messages:
+            print("REQUEST FROM THE CLIENT:\n" + request + '\n')
 
         # Set the directory of the file server if not default
         if not args.path_to_dir == current_directory:
@@ -33,7 +36,7 @@ def handle_client(conn, addr):
         else:
             working_directory = args.path_to_dir
 
-        response = build_response_from_request(request, working_directory)
+        response = build_response_from_request(request, working_directory, debug_messages)
         conn.sendall(response.encode("utf-8"))
 
     finally:
